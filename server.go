@@ -2,6 +2,8 @@ package kitus
 
 import (
 	"context"
+	"encoding/binary"
+	"github.com/zhihanii/gio"
 	"net"
 	"reflect"
 	"strings"
@@ -22,14 +24,21 @@ type server struct {
 	msgChannels []chan *Message
 }
 
-//func NewServer() Server {
-//}
+func NewServer(ctx context.Context, opts *Options) Server {
+	s := &server{
+		ctx:      ctx,
+		opts:     opts,
+		services: make(map[string]*ServiceInfo),
+	}
+	s.initServerWorkers()
+	return s
+}
 
 func (s *server) initServerWorkers() {
 	s.msgChannels = make([]chan *Message, s.opts.numServerWorkers)
 	for i := uint32(0); i < s.opts.numServerWorkers; i++ {
 		s.msgChannels[i] = make(chan *Message)
-
+		go s.serveChan(s.msgChannels[i])
 	}
 }
 
@@ -67,36 +76,36 @@ func (s *server) handleMessage(m *Message) {
 }
 
 func (s *server) processRPC(srv interface{}, md *MethodInfo, m *Message) {
-	//dec := func(v interface{}) error {
-	//	if err := GetCodec().Unmarshal(m.Args, v); err != nil {
-	//		return err
-	//	}
-	//	return nil
-	//}
-	//resp, err := md.Handler(srv, s.ctx, dec)
-	//if err != nil {
-	//
-	//}
-	//err = s.sendResponse(m.Writer, resp)
-	//if err != nil {
-	//
-	//}
+	dec := func(v interface{}) error {
+		if err := GetCodec().Unmarshal(m.Args, v); err != nil {
+			return err
+		}
+		return nil
+	}
+	resp, err := md.Handler(srv, s.ctx, dec)
+	if err != nil {
+
+	}
+	err = s.sendResponse(m.Writer, resp)
+	if err != nil {
+
+	}
 }
 
-//func (s *server) sendResponse(w Writer, msg interface{}) error {
-//	data, err := GetCodec().Marshal(msg)
-//	if err != nil {
-//		return err
-//	}
-//	b := make([]byte, 4+len(data))
-//	binary.BigEndian.PutUint32(b[:4], uint32(len(data)))
-//	_ = copy(b[4:], data)
-//	_, err = w.Write(b)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
+func (s *server) sendResponse(w gio.Writer, msg interface{}) error {
+	data, err := GetCodec().Marshal(msg)
+	if err != nil {
+		return err
+	}
+	b := make([]byte, 4+len(data))
+	binary.BigEndian.PutUint32(b[:4], uint32(len(data)))
+	_ = copy(b[4:], data)
+	_, err = w.Write(b)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (s *server) RegisterService(svcInfo *ServiceInfo, handler interface{}) {
 	if handler != nil {

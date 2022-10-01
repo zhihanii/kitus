@@ -2,6 +2,7 @@ package kitus
 
 import (
 	"encoding/binary"
+	"github.com/zhihanii/gio"
 	"sync/atomic"
 )
 
@@ -21,6 +22,7 @@ type RpcInfo struct {
 type Message struct {
 	RpcInfo RpcInfo
 	Args    []byte
+	Writer  gio.Writer
 }
 
 func newMessage(method string, args []byte) *Message {
@@ -53,6 +55,7 @@ func parse(data []byte) (*Message, error) {
 	mLen := binary.BigEndian.Uint16(data[4:6])
 	rpcInfo.Method = make([]byte, mLen)
 	_ = copy(rpcInfo.Method, data[6:6+mLen])
+	m.RpcInfo = rpcInfo
 	aLen := binary.BigEndian.Uint32(data[6+mLen : 10+mLen])
 	m.Args = make([]byte, aLen)
 	_ = copy(m.Args, data[10+mLen:])

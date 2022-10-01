@@ -31,6 +31,8 @@ func (h *srvHandler) OnRead(ctx context.Context, conn gio.Conn) error {
 		return err
 	}
 
+	m.Writer = conn
+
 	h.Handle(m)
 
 	return nil
