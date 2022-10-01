@@ -1,4 +1,4 @@
-module github.com/zhihanii/kitus/cmd/protoc-gen-kitus
+module github.com/zhihanii/kitus/cmd/kitus-protoc
 
 go 1.17
 
