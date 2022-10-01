@@ -12,6 +12,7 @@ import (
 
 type Server interface {
 	RegisterService(svcInfo *ServiceInfo, handler interface{})
+	Serve(ln net.Listener) error
 }
 
 type server struct {
