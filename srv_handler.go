@@ -9,6 +9,10 @@ type srvHandler struct {
 	Handle func(m *Message)
 }
 
+func (h *srvHandler) OnConnect(ctx context.Context, conn gio.Conn) error {
+	return nil
+}
+
 func (h *srvHandler) OnRead(ctx context.Context, conn gio.Conn) error {
 	var (
 		length int32
