@@ -9,4 +9,4 @@ type ServerInfo struct {
 
 type Handler func(ctx context.Context, req interface{}) (interface{}, error)
 
-type ServerInterceptor func(ctx context.Context, req interface{}, info *ServiceInfo, handler Handler) (resp interface{}, err error)
+type ServerInterceptor func(ctx context.Context, req interface{}, info *ServerInfo, handler Handler) (resp interface{}, err error)
