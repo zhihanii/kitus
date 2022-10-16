@@ -18,14 +18,14 @@ type Server interface {
 type server struct {
 	ctx context.Context
 
-	opts *Options
+	opts *options
 
 	services map[string]*ServiceInfo
 
 	msgChannels []chan *Message
 }
 
-func NewServer(ctx context.Context, opts *Options) Server {
+func NewServer(ctx context.Context, opts *options) Server {
 	s := &server{
 		ctx:      ctx,
 		opts:     opts,
