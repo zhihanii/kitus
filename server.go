@@ -83,7 +83,7 @@ func (s *server) processRPC(srv interface{}, md *MethodInfo, m *Message) {
 		}
 		return nil
 	}
-	resp, err := md.Handler(srv, s.ctx, dec)
+	resp, err := md.Handler(srv, s.ctx, dec, s.opts.interceptor)
 	if err != nil {
 
 	}

@@ -249,12 +249,22 @@ func (g *Generator) generateRegisters() {
 func (g *Generator) generateHandlers() {
 	for _, s := range g.services {
 		for _, m := range s.MethodNames {
-			g.P(fmt.Sprintf("func _%s_%s_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error) (interface{}, error) {", s.SvcName, m))
+			g.P(fmt.Sprintf("func _%s_%s_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor kitus.ServerInterceptor) (interface{}, error) {", s.SvcName, m))
 			g.P(fmt.Sprintf("    req := new(%s)", s.RequestTypes[m]))
 			g.P("    if err := dec(req); err != nil {")
 			g.P("        return nil, err")
 			g.P("    }")
-			g.P(fmt.Sprintf("    return srv.(%s).%s(ctx, req)", s.SrvName, m))
+			g.P("    if interceptor == nil {")
+			g.P(fmt.Sprintf("        return srv.(%s).%s(ctx, req)", s.SrvName, m))
+			g.P("    }")
+			g.P("    info := &kitus.ServerInfo{")
+			g.P("        Server: srv,")
+			g.P(fmt.Sprintf("        FullMethod: \"%s\",", "/"+g.opts.PackagePath+"."+s.SvcName+"/"+m))
+			g.P("    }")
+			g.P("    handler := func(ctx context.Context, req interface{}) (interface{}, error) {")
+			g.P(fmt.Sprintf("        return srv.(%s).%s(ctx, req.(*%s))", s.SrvName, m, s.RequestTypes[m]))
+			g.P("    }")
+			g.P("    return interceptor(ctx, req, info, handler)")
 			g.P("}")
 			g.P("")
 		}

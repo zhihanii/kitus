@@ -11,7 +11,7 @@ type ServiceInfo struct {
 	Methods map[string]*MethodInfo
 }
 
-type MethodHandler func(srv interface{}, ctx context.Context, dec func(interface{}) error) (interface{}, error)
+type MethodHandler func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor ServerInterceptor) (interface{}, error)
 
 type MethodInfo struct {
 	MethodName string
