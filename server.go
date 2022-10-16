@@ -18,21 +18,60 @@ type Server interface {
 type server struct {
 	ctx context.Context
 
-	opts *options
+	opts options
 
 	services map[string]*ServiceInfo
 
 	msgChannels []chan *Message
 }
 
-func NewServer(ctx context.Context, opts *options) Server {
+func NewServer(opts ...Option) Server {
 	s := &server{
-		ctx:      ctx,
-		opts:     opts,
 		services: make(map[string]*ServiceInfo),
 	}
-	s.initServerWorkers()
+	for _, o := range opts {
+		o(&s.opts)
+	}
+	chainServerInterceptors(s)
+	if s.opts.numServerWorkers > 0 {
+		s.initServerWorkers()
+	}
 	return s
+}
+
+func chainServerInterceptors(s *server) {
+	ints := s.opts.chainInts
+	if s.opts.interceptor != nil {
+		ints = append([]ServerInterceptor{s.opts.interceptor}, s.opts.chainInts...)
+	}
+
+	var chainedInt ServerInterceptor
+	if len(ints) == 0 {
+		chainedInt = nil
+	} else if len(ints) == 1 {
+		chainedInt = ints[0]
+	} else {
+		chainedInt = chainInterceptors(ints)
+	}
+
+	s.opts.interceptor = chainedInt
+}
+
+func chainInterceptors(ints []ServerInterceptor) ServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *ServerInfo, handler Handler) (resp interface{}, err error) {
+		var state struct {
+			i    int
+			next Handler
+		}
+		state.next = func(ctx context.Context, req interface{}) (interface{}, error) {
+			if state.i == len(ints)-1 {
+				return ints[state.i](ctx, req, info, handler)
+			}
+			state.i++
+			return ints[state.i-1](ctx, req, info, state.next)
+		}
+		return state.next(ctx, req)
+	}
 }
 
 func (s *server) initServerWorkers() {

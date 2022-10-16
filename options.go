@@ -14,7 +14,7 @@ func Interceptor(i ServerInterceptor) Option {
 	}
 }
 
-func ChainInterceptor(ints ...ServerInterceptor) Option {
+func ChainInterceptors(ints ...ServerInterceptor) Option {
 	return func(o *options) {
 		o.chainInts = append(o.chainInts, ints...)
 	}
